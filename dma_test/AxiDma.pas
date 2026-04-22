@@ -35,6 +35,7 @@ type
     constructor Create(ABaseAddress: LongWord);
     destructor Destroy; override;
     function GetControlResgister(Channel: TChannel): LongWord;
+    function GetStatusResgister(Channel: TChannel): LongWord;
   end;
 
 implementation
@@ -83,6 +84,7 @@ begin
   begin
     EXIT;
   end;
+
   try
     FMapBase := fpMMap(nil, MAP_SIZE, PROT_READ or PROT_WRITE, MAP_SHARED, FFileDesriptor, LPhysicalAddress and not MAP_MASK);
     if (FMapBase = nil) then
@@ -93,7 +95,43 @@ begin
 
     try
       LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
-      Result := (PLongWord(LVirtualAddress))^
+      Result := (PLongWord(LVirtualAddress))^;
+    finally
+      fpMUnMap(FMapBase, MAP_SIZE);
+      FMapBase := nil;
+    end;
+  finally
+    CloseDevMem;
+  end;  
+end;
+
+function TAxiDma.GetStatusResgister(Channel: TChannel): LongWord;
+var 
+  LPhysicalAddress: LongWord;
+  LVirtualAddress: Pointer;
+begin
+  Result := 0;
+  case Channel of
+  cMM2S: LPhysicalAddress := FBaseAddress + MM2S_DMASR;
+  cS2MM: LPhysicalAddress := FBaseAddress + S2MM_DMASR;
+  end;
+  
+  if not OpenDevMem then
+  begin
+    EXIT;
+  end;
+  
+  try
+    FMapBase := fpMMap(nil, MAP_SIZE, PROT_READ or PROT_WRITE, MAP_SHARED, FFileDesriptor, LPhysicalAddress and not MAP_MASK);
+    if (FMapBase = nil) then
+    begin
+      WriteLn('fpMMap faile with error ', GetLastOSError);
+      EXIT;
+    end;
+
+    try
+      LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
+      Result := (PWord(LVirtualAddress))^;
     finally
       fpMUnMap(FMapBase, MAP_SIZE);
       FMapBase := nil;
