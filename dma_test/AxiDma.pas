@@ -55,6 +55,11 @@ end;
 function TAxiDma.OpenDevMem: Boolean;
 begin
   FFileDesriptor := fpOpen('/dev/mem', O_RDWR or O_SYNC);
+  if (-1 = FFileDesriptor) then
+  begin
+    WriteLn('fpOpen failed with error ', GetLastOSError);
+    EXIT;
+  end;
 end;
 
 procedure TAxiDma.CloseDevMem;
@@ -74,21 +79,28 @@ begin
   cS2MM: LPhysicalAddress := FBaseAddress +  S2MM_DMACR;
   end;
   
-  
-  FMapBase := fpMMap(nil, MAP_SIZE, PROT_READ or PROT_WRITE, MAP_SHARED, FFileDesriptor, LPhysicalAddress and not MAP_MASK);
-  if (FMapBase = nil) then
+  if not OpenDevMem then
   begin
-    WriteLn('fpMMap faile with error ', GetLastOSError);
     EXIT;
   end;
-
   try
-    LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
-    Result := (PLongWord(LVirtualAddress))^
+    FMapBase := fpMMap(nil, MAP_SIZE, PROT_READ or PROT_WRITE, MAP_SHARED, FFileDesriptor, LPhysicalAddress and not MAP_MASK);
+    if (FMapBase = nil) then
+    begin
+      WriteLn('fpMMap faile with error ', GetLastOSError);
+      EXIT;
+    end;
+
+    try
+      LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
+      Result := (PLongWord(LVirtualAddress))^
+    finally
+      fpMUnMap(FMapBase, MAP_SIZE);
+      FMapBase := nil;
+    end;
   finally
-    fpMUnMap(FMapBase, MAP_SIZE);
-    FMapBase := nil;
-  end;
+    CloseDevMem;
+  end;  
 end;
 
 begin
