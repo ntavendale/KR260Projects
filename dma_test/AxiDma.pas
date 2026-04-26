@@ -12,16 +12,16 @@ const
   // Channel 1 (Memory Map To Stream) offsets
   MM2S_DMACR  = $00000000; // Channel 1 control register
   MM2S_DMASR  = $00000004; // Channel 1 status register (read half word only)
-  MM2S_SA     = $00000018; // Channel 1 Memory Map to stream source address (Lower)
-  MM2S_SA_MSB = $0000001C; // Channel 1 Memory Map to stream source address (Upper)
-  MM2S_LENGTH = $00000028; // Channel 1 Memory Map To Stream  Source Address (Address of incoming data)
+  MM2S_SA     = $00000018; // Channel 1 Memory Map to Stream source address (Lower)
+  MM2S_SA_MSB = $0000001C; // Channel 1 Memory Map to Stream source address (Upper)
+  MM2S_LENGTH = $00000028; // Channel 1 Memory Map To Stream  buffer length (bytes)
 
   // Channel 2 (Stream  to memory map) offsets
   S2MM_DMACR  = $00000030; // Channel 2 control register
   S2MM_DMASR  = $00000034; // Channel 2 status register (read half word only)
-  S2MM_DA     = $00000048; // Channel 2 Memory Map to stream destination address (Lower)
-  S2MM_DA_MSB = $0000004C; // Channel 2 Memory Map to stream destination address (Upper)
-  S2MM_LENGTH = $00000058; // Channel 1 Memory Map To Stream  Source Address (Address of incoming data)
+  S2MM_DA     = $00000048; // Channel 2 Stream To Memory Map destination address (Lower)
+  S2MM_DA_MSB = $0000004C; // Channel 2 Stream To Memory Map destination address (Upper)
+  S2MM_LENGTH = $00000058; // Channel 2 Stream To Memory Map buffer length (bytes)
 
 type
   TByteArray = array of Byte;  
