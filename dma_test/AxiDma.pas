@@ -12,13 +12,15 @@ const
   // Channel 1 (Memory Map To Stream) offsets
   MM2S_DMACR  = $00000000; // Channel 1 control register
   MM2S_DMASR  = $00000004; // Channel 1 status register (read half word only)
-  MM2S_SA     = $00000018; // Channel 1 Memory Map to stream source address
+  MM2S_SA     = $00000018; // Channel 1 Memory Map to stream source address (Lower)
+  MM2S_SA_MSB = $0000001C; // Channel 1 Memory Map to stream source address (Upper)
   MM2S_LENGTH = $00000028; // Channel 1 Memory Map To Stream  Source Address (Address of incoming data)
 
   // Channel 2 (Stream  to memory map) offsets
   S2MM_DMACR  = $00000030; // Channel 2 control register
   S2MM_DMASR  = $00000034; // Channel 2 status register (read half word only)
-  S2MM_DA     = $00000048; // Channel 2 Memory Map to stream destination address
+  S2MM_DA     = $00000048; // Channel 2 Memory Map to stream destination address (Lower)
+  S2MM_DA_MSB = $0000004C; // Channel 2 Memory Map to stream destination address (Upper)
   S2MM_LENGTH = $00000058; // Channel 1 Memory Map To Stream  Source Address (Address of incoming data)
 
 type
@@ -34,8 +36,13 @@ type
   public
     constructor Create(ABaseAddress: LongWord);
     destructor Destroy; override;
-    function GetControlResgister(Channel: TChannel): LongWord;
-    function GetStatusResgister(Channel: TChannel): LongWord;
+    function GetControl(Channel: TChannel): LongWord;
+    function GetStatus(Channel: TChannel): LongWord;
+    function GetSourceAddressLower: LongWord;
+    function GetSourceAddressUpper: LongWord;
+    function GetDestAddressLower: LongWord;
+    function GetDestAddressUpper: LongWord;
+    function GetBufferLength(Channel: TChannel): LongWord;
   end;
 
 implementation
@@ -69,7 +76,7 @@ begin
     fpClose(FFileDesriptor);
 end;
 
-function TAxiDma.GetControlResgister(Channel: TChannel): LongWord;
+function TAxiDma.GetControl(Channel: TChannel): LongWord;
 var 
   LPhysicalAddress: LongWord;
   LVirtualAddress: Pointer;
@@ -105,7 +112,7 @@ begin
   end;  
 end;
 
-function TAxiDma.GetStatusResgister(Channel: TChannel): LongWord;
+function TAxiDma.GetStatus(Channel: TChannel): LongWord;
 var 
   LPhysicalAddress: LongWord;
   LVirtualAddress: Pointer;
@@ -132,6 +139,174 @@ begin
     try
       LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
       Result := (PWord(LVirtualAddress))^;
+    finally
+      fpMUnMap(FMapBase, MAP_SIZE);
+      FMapBase := nil;
+    end;
+  finally
+    CloseDevMem;
+  end;  
+end;
+
+function TAxiDma.GetSourceAddressLower: LongWord;
+var 
+  LPhysicalAddress: LongWord;
+  LVirtualAddress: Pointer;
+begin
+  Result := 0;
+  LPhysicalAddress := FBaseAddress + MM2S_SA;
+  
+  if not OpenDevMem then
+  begin
+    EXIT;
+  end;
+  
+  try
+    FMapBase := fpMMap(nil, MAP_SIZE, PROT_READ or PROT_WRITE, MAP_SHARED, FFileDesriptor, LPhysicalAddress and not MAP_MASK);
+    if (FMapBase = nil) then
+    begin
+      WriteLn('fpMMap faile with error ', GetLastOSError);
+      EXIT;
+    end;
+
+    try
+      LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
+      Result := (PLongWord(LVirtualAddress))^;
+    finally
+      fpMUnMap(FMapBase, MAP_SIZE);
+      FMapBase := nil;
+    end;
+  finally
+    CloseDevMem;
+  end;  
+end;
+
+function TAxiDma.GetSourceAddressUpper: LongWord;
+var 
+  LPhysicalAddress: LongWord;
+  LVirtualAddress: Pointer;
+begin
+  Result := 0;
+  LPhysicalAddress := FBaseAddress + MM2S_SA_MSB;
+  
+  if not OpenDevMem then
+  begin
+    EXIT;
+  end;
+  
+  try
+    FMapBase := fpMMap(nil, MAP_SIZE, PROT_READ or PROT_WRITE, MAP_SHARED, FFileDesriptor, LPhysicalAddress and not MAP_MASK);
+    if (FMapBase = nil) then
+    begin
+      WriteLn('fpMMap faile with error ', GetLastOSError);
+      EXIT;
+    end;
+
+    try
+      LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
+      Result := (PLongWord(LVirtualAddress))^;
+    finally
+      fpMUnMap(FMapBase, MAP_SIZE);
+      FMapBase := nil;
+    end;
+  finally
+    CloseDevMem;
+  end;  
+end;
+
+function TAxiDma.GetDestAddressLower: LongWord;
+var 
+  LPhysicalAddress: LongWord;
+  LVirtualAddress: Pointer;
+begin
+  Result := 0;
+  LPhysicalAddress := FBaseAddress + S2MM_DA;
+  
+  if not OpenDevMem then
+  begin
+    EXIT;
+  end;
+  
+  try
+    FMapBase := fpMMap(nil, MAP_SIZE, PROT_READ or PROT_WRITE, MAP_SHARED, FFileDesriptor, LPhysicalAddress and not MAP_MASK);
+    if (FMapBase = nil) then
+    begin
+      WriteLn('fpMMap faile with error ', GetLastOSError);
+      EXIT;
+    end;
+
+    try
+      LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
+      Result := (PLongWord(LVirtualAddress))^;
+    finally
+      fpMUnMap(FMapBase, MAP_SIZE);
+      FMapBase := nil;
+    end;
+  finally
+    CloseDevMem;
+  end;  
+end;
+
+function TAxiDma.GetDestAddressUpper: LongWord;
+var 
+  LPhysicalAddress: LongWord;
+  LVirtualAddress: Pointer;
+begin
+  Result := 0;
+  LPhysicalAddress := FBaseAddress + S2MM_DA_MSB;
+  
+  if not OpenDevMem then
+  begin
+    EXIT;
+  end;
+  
+  try
+    FMapBase := fpMMap(nil, MAP_SIZE, PROT_READ or PROT_WRITE, MAP_SHARED, FFileDesriptor, LPhysicalAddress and not MAP_MASK);
+    if (FMapBase = nil) then
+    begin
+      WriteLn('fpMMap faile with error ', GetLastOSError);
+      EXIT;
+    end;
+
+    try
+      LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
+      Result := (PLongWord(LVirtualAddress))^;
+    finally
+      fpMUnMap(FMapBase, MAP_SIZE);
+      FMapBase := nil;
+    end;
+  finally
+    CloseDevMem;
+  end;  
+end;
+
+function TAxiDma.GetBufferLength(Channel: TChannel): LongWord;
+var 
+  LPhysicalAddress: LongWord;
+  LVirtualAddress: Pointer;
+begin
+  Result := 0;
+  case Channel of
+  cMM2S: LPhysicalAddress := FBaseAddress +  MM2S_LENGTH;
+  cS2MM: LPhysicalAddress := FBaseAddress +  S2MM_LENGTH;
+  end;
+  
+  if not OpenDevMem then
+  begin
+    EXIT;
+  end;
+
+  try
+    FMapBase := fpMMap(nil, MAP_SIZE, PROT_READ or PROT_WRITE, MAP_SHARED, FFileDesriptor, LPhysicalAddress and not MAP_MASK);
+    if (FMapBase = nil) then
+    begin
+      WriteLn('fpMMap faile with error ', GetLastOSError);
+      EXIT;
+    end;
+
+    try
+      LVirtualAddress := FMapBase + (LPhysicalAddress and MAP_MASK);
+      Result := (PLongWord(LVirtualAddress))^;
     finally
       fpMUnMap(FMapBase, MAP_SIZE);
       FMapBase := nil;
