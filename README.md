@@ -22,6 +22,8 @@ fpc -odmareg dmareg.dpr
 ```
 
 ## Git Access
+You need to do this every time you log on. Must be a better eway - look into it!
+
 Start ssh agent:
 ```
  eval "$(ssh-agent -s)"
