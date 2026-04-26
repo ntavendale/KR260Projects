@@ -21,3 +21,22 @@ cd to KR260Projects/test_dma directory
 fpc -odmareg dmareg.dpr
 ```
 
+## Git Access
+Start ssh agent:
+```
+ eval "$(ssh-agent -s)"
+```
+
+Add private key:
+```
+ssh-add ~/.ssh/<my_key_Name>
+```
+
+Clone using ssh:
+
+```
+ git clone ssh://git@ssh.github.com:443/ntavendale/KR260Projects.git
+ ```
+
+
+
